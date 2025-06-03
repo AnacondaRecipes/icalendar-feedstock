@@ -1,6 +1,6 @@
 {% set name = "icalendar" %}
-{% set version = "4.0.7" %}
-{% set sha256 = "0fc18d87f66e0b5da84fa731389496cfe18e4c21304e8f6713556b2e8724a7a4" %}
+{% set version = "6.3.1" %}
+{% set sha256 = "a697ce7b678072941e519f2745704fc29d78ef92a2dc53d9108ba6a04aeba466" %}
 
 package:
   name: {{ name|lower }}
@@ -12,24 +12,36 @@ source:
   sha256: {{ sha256 }}
 
 build:
-  noarch: python
   number: 0
-  script: {{ PYTHON }} -m pip install . --no-deps -vv
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed --no-cache-dir -vv
 
 requirements:
   host:
     - pip
     - python
-    - setuptools
+    - hatchling >=1.27.0
+    - hatch-vcs
 
   run:
     - python
     - python-dateutil
-    - pytz
+    - backports.zoneinfo  # [py<39]
+    - python-tzdata
 
 test:
+  source_files:
+    - src/icalendar/tests
+    - docs
   imports:
     - icalendar
+  commands:
+    - pip check
+    - pytest -xvs
+  requires:
+    - pip
+    - pytest
+    - hypothesis
+    - pytz
 
 about:
   home: https://github.com/collective/icalendar
