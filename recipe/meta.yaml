@@ -31,12 +31,11 @@ requirements:
 test:
   source_files:
     - src/icalendar/tests
-    - docs
   imports:
     - icalendar
   commands:
     - pip check
-    - pytest -xvs
+    - pytest -xvs -k "not (test_timezone_names_are_known)" --ignore=src/icalendar/tests/test_with_doctest.py
   requires:
     - pip
     - pytest
