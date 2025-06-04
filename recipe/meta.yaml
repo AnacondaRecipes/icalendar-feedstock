@@ -1,6 +1,6 @@
 {% set name = "icalendar" %}
-{% set version = "4.0.7" %}
-{% set sha256 = "0fc18d87f66e0b5da84fa731389496cfe18e4c21304e8f6713556b2e8724a7a4" %}
+{% set version = "6.3.1" %}
+{% set sha256 = "a697ce7b678072941e519f2745704fc29d78ef92a2dc53d9108ba6a04aeba466" %}
 
 package:
   name: {{ name|lower }}
@@ -12,24 +12,57 @@ source:
   sha256: {{ sha256 }}
 
 build:
-  noarch: python
   number: 0
-  script: {{ PYTHON }} -m pip install . --no-deps -vv
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed --no-cache-dir -vv
 
 requirements:
   host:
     - pip
     - python
-    - setuptools
+    - hatchling >=1.27.0
+    - hatch-vcs
 
   run:
     - python
     - python-dateutil
-    - pytz
+    - backports.zoneinfo  # [py<39]
+    - python-tzdata
+
+# Test files excluded on all platforms due to missing docs in PyPI source distribution
+{% set pytest_ignore_tests = "--ignore=src/icalendar/tests/test_with_doctest.py" %}
+
+#  AssertionError: PYTZ should know build/etc/localtime
+#  This is incorrectly ran and should be skipped, but is missed in:
+#         if tz_name in ("Factory", "localtime"):
+#             pytest.skip()
+{% set pytest_skip_tests = "test_timezone_names_are_known" %}
+
+# Test files excluded on Windows due to platform-specific timezone and line ending issues
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_336_dateutil_timezone.py" %}   # [win]
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_722_generate_vtimezone.py" %}  # [win]
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_timezone_identification.py" %}       # [win]
+
+# Skip tests that fail on Windows due to line ending differences (CRLF vs LF)
+{% set pytest_skip_tests = pytest_skip_tests + " or test_creating_calendar_with_unicode_fields or test_all_parameters" %}  # [win]
+
+# Skip tests that fail on Windows due to timezone representation differences
+# AssertionError: assert b'DTSTART:20120716T000000Z' in b'BEGIN:VEVENT\r\nDTSTART;TZID=Coordinated Universal Time:20120716T000000\r\nEND:VEVENT\r\n'
+{% set pytest_skip_tests = pytest_skip_tests + " or test_no_tzid_when_utc" %}  # [win]
 
 test:
+  source_files:
+    - src/icalendar/tests
   imports:
     - icalendar
+  commands:
+    - pip check
+    - pytest -xvs -k "not ({{ pytest_skip_tests }})" {{ pytest_ignore_tests }}
+
+  requires:
+    - pip
+    - pytest
+    - hypothesis
+    - pytz
 
 about:
   home: https://github.com/collective/icalendar
@@ -40,7 +73,7 @@ about:
   description: |
     The icalendar package is a parser/generator of iCalendar files for use with
     Python.
-  doc_url: http://icalendar.readthedocs.io/en/latest/
+  doc_url: https://icalendar.readthedocs.io
   dev_url: https://github.com/collective/icalendar
 
 extra:
