@@ -53,6 +53,9 @@ requirements:
 # short-circuits before the vendor-prefix-stripping branch and the expected
 # GloballyUniqueTZIDGuessed warning is never re-emitted for the same TZID.
 {% set pytest_skip_tests = pytest_skip_tests + " or test_timezone_id_resolves" %}
+# rfc_6868_unescape() decodes the RFC 6868 "^n" parameter escape to
+# os.linesep, which is "\r\n" on Windows instead of the expected "\n".
+{% set pytest_skip_tests = pytest_skip_tests + " or test_unrecognized_parameter_is_decoded_not_verbatim" %}  # [win]
 
 test:
   source_files:
