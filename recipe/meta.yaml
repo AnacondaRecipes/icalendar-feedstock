@@ -45,6 +45,9 @@ requirements:
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_336_dateutil_timezone.py" %}  # [win]
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_722_generate_vtimezone.py" %}  # [win]
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_timezone_identification.py" %}  # [win]
+# pytest encodes the full parametrize id (200,000 chars) into PYTEST_CURRENT_TEST;
+# Windows' os.putenv rejects values over 32767 chars (ValueError at setup/teardown).
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_parser_quadratic_unfolding.py" %}  # [win]
 {% set pytest_skip_tests = "test_timezone_names_are_known" %}
 {% set pytest_skip_tests = pytest_skip_tests + " or test_creating_calendar_with_unicode_fields or test_all_parameters" %}  # [win]
 {% set pytest_skip_tests = pytest_skip_tests + " or test_no_tzid_when_utc" %}  # [win]
