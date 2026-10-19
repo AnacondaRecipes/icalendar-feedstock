@@ -1,6 +1,6 @@
 {% set name = "icalendar" %}
-{% set version = "7.1.3" %}
-{% set sha256 = "eb03a0e215f30db689a72c49f18f998aabf17522eb0858a293c393510850727c" %}
+{% set version = "7.3.0" %}
+{% set sha256 = "7bd001c8e648205e1bde5c6a5b77096598e8d0893dcf57755c6c597635620132" %}
 
 package:
   name: {{ name }}
@@ -25,8 +25,8 @@ requirements:
   run:
     - python
     - python-dateutil
-    - python-tzdata
-    - typing-extensions >=4.10.0 # [py<313]
+    - python-tzdata >=2025.3
+    - typing-extensions >=4.10.0,<5.0a0 # [py<313]
 
 # Test files excluded on all platforms due to missing docs in PyPI source distribution
 #  AssertionError: PYTZ should know build/etc/localtime
@@ -40,12 +40,25 @@ requirements:
 {% set pytest_ignore_tests = "--ignore=src/icalendar/tests/test_with_doctest.py" %}
 # No funding.json in pypi package
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_funding_json.py" %}
+# generate_windows_to_olson_mapping.py (repo-root dev script) is excluded from the PyPI sdist
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_generate_windows_to_olson_mapping.py" %}
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_336_dateutil_timezone.py" %}  # [win]
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_issue_722_generate_vtimezone.py" %}  # [win]
 {% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_timezone_identification.py" %}  # [win]
+# pytest encodes the full parametrize id (200,000 chars) into PYTEST_CURRENT_TEST;
+# Windows' os.putenv rejects values over 32767 chars (ValueError at setup/teardown).
+{% set pytest_ignore_tests = pytest_ignore_tests + " --ignore=src/icalendar/tests/test_parser_quadratic_unfolding.py" %}  # [win]
 {% set pytest_skip_tests = "test_timezone_names_are_known" %}
 {% set pytest_skip_tests = pytest_skip_tests + " or test_creating_calendar_with_unicode_fields or test_all_parameters" %}  # [win]
 {% set pytest_skip_tests = pytest_skip_tests + " or test_no_tzid_when_utc" %}  # [win]
+# Module-scoped tzp fixture caches the resolved timezone from the preceding
+# test_events_with_global_tzids_are_timezone_aware run, so the cache lookup
+# short-circuits before the vendor-prefix-stripping branch and the expected
+# GloballyUniqueTZIDGuessed warning is never re-emitted for the same TZID.
+{% set pytest_skip_tests = pytest_skip_tests + " or test_timezone_id_resolves" %}
+# rfc_6868_unescape() decodes the RFC 6868 "^n" parameter escape to
+# os.linesep, which is "\r\n" on Windows instead of the expected "\n".
+{% set pytest_skip_tests = pytest_skip_tests + " or test_unrecognized_parameter_is_decoded_not_verbatim" %}  # [win]
 
 test:
   source_files:
@@ -63,7 +76,7 @@ test:
     - pytz
 
 about:
-  home: https://github.com/collective/icalendar
+  home: https://icalendar.readthedocs.io
   license: BSD-2-Clause
   license_family: BSD
   license_file: LICENSE.rst
