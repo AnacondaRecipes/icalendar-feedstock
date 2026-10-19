@@ -76,7 +76,7 @@ test:
     - pytz
 
 about:
-  home: https://github.com/collective/icalendar
+  home: https://icalendar.readthedocs.io
   license: BSD-2-Clause
   license_family: BSD
   license_file: LICENSE.rst
